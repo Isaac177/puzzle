@@ -33,11 +33,11 @@ class MainFragment : Fragment() {
         buttonThreeXThree?.setOnClickListener {
             mainActivity.showPuzzleFragment(3)
         }
-        /*buttonFourXFour?.setOnClickListener {
+        buttonFourXFour?.setOnClickListener {
             mainActivity.showPuzzleFragment(4)
         }
         buttonFiveXFive?.setOnClickListener {
             mainActivity.showPuzzleFragment(5)
-        }*/
+        }
     }
 }

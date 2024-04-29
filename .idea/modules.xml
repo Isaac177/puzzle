@@ -2,11 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/NPuzzle.iml" filepath="$PROJECT_DIR$/.idea/modules/NPuzzle.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/NPuzzle.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/NPuzzle.app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/NPuzzle.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/NPuzzle.app.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/NPuzzle.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/NPuzzle.app.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/NPuzzle.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/NPuzzle.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/puzzle.iml" filepath="$PROJECT_DIR$/.idea/modules/puzzle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/puzzle.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/puzzle.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/puzzle.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/puzzle.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/puzzle.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/puzzle.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/puzzle.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/puzzle.app.unitTest.iml" />
     </modules>
   </component>
 </project>
