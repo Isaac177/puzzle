@@ -1,7 +1,6 @@
 package com.example.npuzzle
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -9,34 +8,47 @@ import android.graphics.Point
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import androidx.fragment.app.FragmentManager
+
 
 @SuppressLint("ViewConstructor")
-
-class PuzzleBoardView(context: Context, val n: Int) : View(context) {
-
+class PuzzleBoardView(context: Context, val n: Int, private val gameCompleteListener: GameCompleteListener) : View(context) {
     private val paint = Paint()
-
     private var containerWidth: Int = 0
-
     private var size = 0
-
+    private var numberOfMovesMade = 0
     private val mat = Array(n) { Array(n) { PuzzleBlock(context, 0, 0F, 0F, 0F) } }
-
     private var emptyBlockIndex = Point(n - 1, n - 1)
+
+
+    fun getNumberOfMovesMade(): Int {
+        return numberOfMovesMade
+    }
+    interface GameCompleteListener {
+        fun onGameComplete(score: Int)
+        abstract fun displayGameOverDialogWithServerResponse(points: Int, moves: String)
+    }
 
     init {
         paint.isAntiAlias = true
     }
 
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        containerWidth = measuredWidth
+        if (containerWidth > 0) {
+            initGame()
+        }
+    }
+
     fun initGame() {
         emptyBlockIndex = Point(n - 1, n - 1)
         size = containerWidth / n
+        numberOfMovesMade = 0
         var x = 0
         var y = 0
         var ID = 1
-        for (i in 0 until mat.size) {
-            for (j in 0 until mat[0].size) {
+        for (i in 0 until n) {
+            for (j in 0 until n) {
                 mat[i][j] = PuzzleBlock(context, ID, x.toFloat(), y.toFloat(), size.toFloat())
                 ID++
                 ID %= n * n
@@ -52,35 +64,14 @@ class PuzzleBoardView(context: Context, val n: Int) : View(context) {
         val iteration = 100
         for (i in 0 until iteration) {
             val options = mutableListOf<Point>()
-            if (emptyBlockIndex.x + 1 < n) {
-                options.add(Point(emptyBlockIndex.x + 1, emptyBlockIndex.y))
-            }
-            if (emptyBlockIndex.x - 1 >= 0) {
-                options.add(Point(emptyBlockIndex.x - 1, emptyBlockIndex.y))
-            }
-            if (emptyBlockIndex.y + 1 < n) {
-                options.add(Point(emptyBlockIndex.x, emptyBlockIndex.y + 1))
-            }
-            if (emptyBlockIndex.y - 1 >= 0) {
-                options.add(Point(emptyBlockIndex.x, emptyBlockIndex.y - 1))
-            }
+            if (emptyBlockIndex.x + 1 < n) options.add(Point(emptyBlockIndex.x + 1, emptyBlockIndex.y))
+            if (emptyBlockIndex.x - 1 >= 0) options.add(Point(emptyBlockIndex.x - 1, emptyBlockIndex.y))
+            if (emptyBlockIndex.y + 1 < n) options.add(Point(emptyBlockIndex.x, emptyBlockIndex.y + 1))
+            if (emptyBlockIndex.y - 1 >= 0) options.add(Point(emptyBlockIndex.x, emptyBlockIndex.y - 1))
             options.shuffle()
             val selectedIndex = options[0]
             swapBlock(selectedIndex.x, selectedIndex.y)
         }
-    }
-
-    private fun isSolution(): Boolean {
-        var count = 1
-        for (i in 0 until mat.size) {
-            for (j in 0 until mat[0].size) {
-                if (mat[i][j].ID != count && count != n * n) {
-                    return false
-                }
-                count++
-            }
-        }
-        return true
     }
 
     private fun swapBlock(i: Int, j: Int) {
@@ -92,77 +83,58 @@ class PuzzleBoardView(context: Context, val n: Int) : View(context) {
 
     private fun makeMove(i: Int, j: Int) {
         swapBlock(i, j)
+        numberOfMovesMade++
         invalidate()
         if (isSolution()) {
-            val alertDialog = AlertDialog.Builder(context).create()
-            alertDialog.setTitle("Congratulations!")
-            alertDialog.setCancelable(false)
-            alertDialog.setMessage("Do you want to play again?")
-            alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes") { dialog, _ ->
-                initGame()
-                invalidate()
-                dialog.dismiss()
-            }
-            alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No") { dialog, _ ->
-                (context as MainActivity).fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                dialog.dismiss()
-            }
-            alertDialog.show()
+            gameCompleteListener.onGameComplete(calculateScore())
         }
+    }
+
+    private fun calculateScore(): Int {
+        return 1000 - numberOfMovesMade
+    }
+
+    private fun isSolution(): Boolean {
+        var count = 1
+        for (i in 0 until n) {
+            for (j in 0 until n) {
+                if (mat[i][j].ID != count && count != n * n) {
+                    return false
+                }
+                count++
+            }
+        }
+        return true
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_UP && size > 0) {
+            val i = (event.y / size).toInt()
+            val j = (event.x / size).toInt()
+
+            if (isValidMove(i, j)) {
+                makeMove(i, j)
+            }
+
+            Log.d("PuzzleBoardView", "Touch at: ${event.x}:${event.y} - Moved to $i,$j")
+        }
+        return true
+    }
+
+    private fun isValidMove(i: Int, j: Int): Boolean {
+        return (i + 1 == emptyBlockIndex.x && j == emptyBlockIndex.y) ||
+            (i - 1 == emptyBlockIndex.x && j == emptyBlockIndex.y) ||
+            (j + 1 == emptyBlockIndex.y && i == emptyBlockIndex.x) ||
+            (j - 1 == emptyBlockIndex.y && i == emptyBlockIndex.x)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        for (i in 0 until mat.size) {
-            for (j in 0 until mat[0].size) {
-                mat[i][j].onDraw(canvas!!, paint)
+        for (i in 0 until n) {
+            for (j in 0 until n) {
+                mat[i][j].onDraw(canvas, paint)
             }
         }
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-
-        containerWidth = measuredWidth
-
-        if (containerWidth == 0) {
-            return
-        }
-
-        initGame()
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        when (event!!.action) {
-
-            MotionEvent.ACTION_DOWN -> {
-                Log.d("event down: ", event.x.toString() + ":" + event.y.toString())
-                return true
-            }
-
-            MotionEvent.ACTION_UP -> {
-                if (size == 0) {
-                    return false
-                }
-
-                val i = (event.y / size).toInt()
-                val j = (event.x / size).toInt()
-
-                if (i + 1 < n && i + 1 == emptyBlockIndex.x && j == emptyBlockIndex.y) {
-                    makeMove(i, j)
-                } else if (i - 1 >= 0 && i - 1 == emptyBlockIndex.x && j == emptyBlockIndex.y) {
-                    makeMove(i, j)
-                } else if (j + 1 < n && i == emptyBlockIndex.x && j + 1 == emptyBlockIndex.y) {
-                    makeMove(i, j)
-                } else if (j - 1 >= 0 && i == emptyBlockIndex.x && j - 1 == emptyBlockIndex.y) {
-                    makeMove(i, j)
-                }
-
-                Log.d("event up: ", event.x.toString() + ":" + event.y.toString())
-            }
-        }
-
-        return super.onTouchEvent(event)
     }
 }
