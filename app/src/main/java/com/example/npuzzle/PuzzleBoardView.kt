@@ -25,7 +25,6 @@ class PuzzleBoardView(context: Context, val n: Int, private val gameCompleteList
     }
     interface GameCompleteListener {
         fun onGameComplete(score: Int)
-        abstract fun displayGameOverDialogWithServerResponse(points: Int, moves: String)
     }
 
     init {

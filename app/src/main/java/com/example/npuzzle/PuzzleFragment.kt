@@ -8,10 +8,10 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import org.json.JSONException
 import org.json.JSONObject
 
 class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
-
     private val logTag = "PuzzleFragment"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +20,6 @@ class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_puzzle, container, false)
     }
 
@@ -28,7 +27,6 @@ class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
         super.onActivityCreated(savedInstanceState)
         val mainActivity: MainActivity = activity as MainActivity
 
-        // Pass `this` as the GameCompleteListener
         val puzzleBoardView = PuzzleBoardView(requireContext(), mainActivity.n, this)
         view?.findViewById<ViewGroup>(R.id.puzzle_container)?.addView(puzzleBoardView)
 
@@ -36,16 +34,34 @@ class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
             puzzleBoardView.initGame()
             puzzleBoardView.invalidate()
         }
+
+        setupSocketListeners(mainActivity)
+    }
+
+    private fun setupSocketListeners(mainActivity: MainActivity) {
+        mainActivity.socketManager.socket.on("update_leaderboard") { args ->
+            activity?.runOnUiThread {
+                if (args.isNotEmpty()) {
+                    try {
+                        val response = JSONObject(args[0].toString())
+                        val scoreId = response.getInt("id")
+                        val moves = response.getString("numberOfMovesMade")
+                        val createdAt = response.getString("createdAt")
+                        val points = response.getInt("points")
+
+                        displayGameOverDialogWithServerResponse(points, moves, mainActivity.socketManager.getUserId())
+                    } catch (e: JSONException) {
+                        e.printStackTrace()
+                        // Handle JSON parsing errors or display an error message
+                    }
+                }
+            }
+        }
     }
 
     override fun onGameComplete(score: Int) {
         Log.d(logTag, "Game completed with score: $score")
-        // Assuming gameOver is called to handle the game over logic
         gameOver(score)
-    }
-
-    override fun displayGameOverDialogWithServerResponse(points: Int, moves: String) {
-        TODO("Not yet implemented")
     }
 
     fun gameOver(points: Int) {
@@ -57,19 +73,6 @@ class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
             put("points", points)
             put("puzzleSize", mainActivity.n)
         })
-
-        mainActivity.socketManager.socket.on("update_leaderboard") { args ->
-            if (args.isNotEmpty()) {
-                val response = JSONObject(args[0].toString())
-                val scoreId = response.getInt("id")
-                val moves = response.getString("moves")
-                val createdAt = response.getString("createdAt")
-
-                activity?.runOnUiThread {
-                    displayGameOverDialogWithServerResponse(points, moves, userId)
-                }
-            }
-        }
     }
 
     private fun displayGameOverDialogWithServerResponse(points: Int, moves: String, userId: String) {

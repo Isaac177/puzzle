@@ -14,7 +14,7 @@ class SocketManager {
 
     fun initSocket() {
         try {
-            socket = IO.socket("http://10.0.2.2:3000")
+            socket = IO.socket("https://puzzle-game-api-wandering-voice-1090.fly.dev")
             socket.connect()
             setupSocketEvents()
         } catch (e: URISyntaxException) {
