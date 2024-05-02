@@ -13,6 +13,7 @@ import org.json.JSONObject
 
 class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
     private val logTag = "PuzzleFragment"
+    private lateinit var progressDialog: AlertDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +54,11 @@ class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
                     } catch (e: JSONException) {
                         e.printStackTrace()
                         // Handle JSON parsing errors or display an error message
+                    } finally {
+                        progressDialog.dismiss()
                     }
+                } else {
+                    progressDialog.dismiss()
                 }
             }
         }
@@ -61,6 +66,7 @@ class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
 
     override fun onGameComplete(score: Int) {
         Log.d(logTag, "Game completed with score: $score")
+        showIndicator()
         gameOver(score)
     }
 
@@ -84,5 +90,14 @@ class PuzzleFragment : Fragment(), PuzzleBoardView.GameCompleteListener {
                 dialog.dismiss()
             }
         }.create().show()
+    }
+
+    private fun showIndicator() {
+        progressDialog = AlertDialog.Builder(requireContext()).apply {
+            setTitle("Game Over")
+            setMessage("Please wait while we update the leaderboard")
+            setCancelable(false)
+        }.create()
+        progressDialog.show()
     }
 }
